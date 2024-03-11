@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const GroceryApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GroceryApp extends StatelessWidget {
+  const GroceryApp({super.key});
 
   // This widget is the root of your application.
   @override
@@ -16,27 +16,79 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Grocery List'),
+      debugShowCheckedModeBanner: false,
+      home: const GroceryList(title: 'Grocery List'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class GroceryList extends StatefulWidget {
+  const GroceryList({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<GroceryList> createState() => _GroceryListState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _GroceryListState extends State<GroceryList> {
+  final List<Item> _items = <Item>[];
+  final TextEditingController _textFieldController = TextEditingController();
 
-  void _incrementCounter() {
+  void _addItem(String name) {
     setState(() {
-      _counter++;
+      _items.add(Item(name: name));
+      // _items.add(Item(name: name, completed: false));
     });
+    _textFieldController.clear();
+  }
+
+  void _handleItemChange(Item item, String newName) {
+    setState(() {
+      item.name = newName;
+    });
+  }
+
+  Future<void> _displayDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add a item'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(hintText: 'Type your item'),
+            autofocus: true,
+          ),
+          actions: <Widget>[
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addItem(_textFieldController.text);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -46,25 +98,133 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+      // body: const Center(
+      //   child: Column(
+      //     mainAxisAlignment: MainAxisAlignment.center,
+      //     children: <Widget>[],
+      //   ),
+      // ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        children: _items.map((Item item) {
+          return ListItem(
+            item: item,
+            onItemChanged: _handleItemChange,
+          );
+        }).toList(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
+        onPressed: _displayDialog,
+        tooltip: 'Add a Grocery Item',
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class Item {
+  Item({required this.name});
+  // Item({required this.name, required this.completed});
+  String name;
+  // bool completed;
+}
+
+class ListItem extends StatelessWidget {
+  ListItem({required this.item, required this.onItemChanged}) : super(key: ObjectKey(item));
+
+  final Item item;
+
+  final void Function(Item item, String newName) onItemChanged;
+
+  final TextEditingController _textFieldController = TextEditingController();
+
+  TextStyle? _getTextStyle() {
+    // TextStyle? _getTextStyle(bool checked) {
+    // if (!checked) return null;
+
+    return const TextStyle(
+      color: Colors.black54,
+      // decoration: TextDecoration.lineThrough,
+    );
+  }
+
+  Future<void> _displayDialog(context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit item'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(hintText: 'new item name'),
+            autofocus: true,
+          ),
+          actions: <Widget>[
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onItemChanged(item, _textFieldController.text);
+              },
+              child: const Text('Edit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: () => _displayDialog(context),
+      // leading: Checkbox(
+      //   checkColor: Colors.greenAccent,
+      //   activeColor: Colors.red,
+      //   value: item.completed,
+      //   onChanged: (value) {},
+      // ),
+      title: Row(children: <Widget>[
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: 30.0),
+            // child: Text(item.name, style: _getTextStyle(),),
+            child: GestureDetector(
+                // onTap: () => _displayDialog(context),
+                child: Text(
+              item.name,
+              style: _getTextStyle(),
+            )),
+          ),
+          // child: Text(item.name, style: _getTextStyle()),
+          // child: Text(item.name, style: _getTextStyle(item.completed)),
+        ),
+        IconButton(
+          iconSize: 30,
+          icon: const Icon(
+            Icons.delete,
+            color: Colors.red,
+          ),
+          alignment: Alignment.centerRight,
+          onPressed: () {},
+        ),
+      ]),
     );
   }
 }
