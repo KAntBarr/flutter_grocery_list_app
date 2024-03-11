@@ -22,6 +22,7 @@ class GroceryApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       // home: const GroceryList(title: 'Grocery List'),
       home: BlocProvider(
+        lazy: false,
         create: (_) => ListBloc(),
         child: GroceryList(
           title: 'Grocery List',
@@ -42,7 +43,7 @@ class GroceryList extends StatelessWidget {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext contextS) {
         return AlertDialog(
           title: const Text('Add a item'),
           content: TextField(
@@ -70,8 +71,10 @@ class GroceryList extends StatelessWidget {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                context
-                    .read<ListBloc>()
+                // context
+                //     .read<ListBloc>()
+                //     .add(AddEvent(_textFieldController.text));
+                BlocProvider.of<ListBloc>(context)
                     .add(AddEvent(_textFieldController.text));
                 _textFieldController.clear();
               },
@@ -90,12 +93,12 @@ class GroceryList extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(title),
       ),
-      body: BlocBuilder(
+      body: BlocBuilder<ListBloc, List<Item>>(
         builder: (context, items) {
           // List<Item> list = items as List<Item>;
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            children: (items as List<Item>).map((Item item) {
+            children: items.map((Item item) {
               return ListItem(
                 item: item,
                 onItemChanged: (item, newName) =>
@@ -107,160 +110,18 @@ class GroceryList extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _displayDialog(context),
-        tooltip: 'Add a Grocery Item',
-        child: const Icon(Icons.add),
+      floatingActionButton: BlocBuilder<ListBloc, List<Item>>(
+        builder: (context, items) {
+          return FloatingActionButton(
+            onPressed: () => _displayDialog(context),
+            tooltip: 'Add a Grocery Item',
+            child: const Icon(Icons.add),
+          );
+        },
       ),
     );
   }
 }
-
-// class GroceryList extends StatefulWidget {
-//   const GroceryList({super.key, required this.title});
-
-//   final String title;
-
-//   @override
-//   State<GroceryList> createState() => _GroceryListState();
-// }
-
-// class _GroceryListState extends State<GroceryList> {
-//   // List<Item> _items = <Item>[];
-//   // final TextEditingController _textFieldController = TextEditingController();
-
-//   // @override
-//   // void initState() {
-//   //   super.initState();
-//   //   _loadList();
-//   // }
-
-//   // Future<void> _loadList() async {
-//   //   final prefs = await SharedPreferences.getInstance();
-//   //   final List<String>? itemIds = prefs.getStringList('itemIds');
-//   //   final List<Item> completeItems = itemIds?.map((String id) {
-//   //         return Item(
-//   //           name: prefs.getString(id) ?? 'error',
-//   //           id: id,
-//   //         );
-//   //       }).toList() ??
-//   //       [];
-//   //   setState(() {
-//   //     _items = completeItems;
-//   //   });
-//   // }
-
-//   // Future<void> _addItem(String name) async {
-//   //   final prefs = await SharedPreferences.getInstance();
-//   //   String time = DateTime.now().millisecondsSinceEpoch.toString();
-//   //   setState(() {
-//   //     _items.add(Item(
-//   //       name: name,
-//   //       id: time,
-//   //     ));
-//   //     // _items.add(Item(name: name, completed: false));
-//   //   });
-//   //   _textFieldController.clear();
-//   //   List<String> itemIds = _items.map((Item item) {
-//   //     return item.id;
-//   //   }).toList();
-//   //   await prefs.setStringList('itemIds', itemIds);
-//   //   await prefs.setString(time, name);
-//   // }
-
-//   // Future<void> _handleItemChange(Item item, String newName) async {
-//   //   final prefs = await SharedPreferences.getInstance();
-//   //   setState(() {
-//   //     item.name = newName;
-//   //   });
-//   //   await prefs.setString(item.id, newName);
-//   // }
-
-//   // Future<void> _deleteItem(String id) async {
-//   //   final prefs = await SharedPreferences.getInstance();
-//   //   setState(() {
-//   //     _items.removeWhere((element) => element.id == id);
-//   //   });
-//   //   List<String> itemIds = _items.map((Item item) {
-//   //     return item.id;
-//   //   }).toList();
-//   //   await prefs.setStringList('itemIds', itemIds);
-//   //   await prefs.remove(id);
-//   // }
-
-//   // Future<void> _displayDialog() async {
-//   //   return showDialog<void>(
-//   //     context: context,
-//   //     barrierDismissible: false,
-//   //     builder: (BuildContext context) {
-//   //       return AlertDialog(
-//   //         title: const Text('Add a item'),
-//   //         content: TextField(
-//   //           controller: _textFieldController,
-//   //           decoration: const InputDecoration(hintText: 'Type your item'),
-//   //           autofocus: true,
-//   //         ),
-//   //         actions: <Widget>[
-//   //           OutlinedButton(
-//   //             style: OutlinedButton.styleFrom(
-//   //               shape: RoundedRectangleBorder(
-//   //                 borderRadius: BorderRadius.circular(12),
-//   //               ),
-//   //             ),
-//   //             onPressed: () {
-//   //               Navigator.of(context).pop();
-//   //             },
-//   //             child: const Text('Cancel'),
-//   //           ),
-//   //           ElevatedButton(
-//   //             style: ElevatedButton.styleFrom(
-//   //               shape: RoundedRectangleBorder(
-//   //                 borderRadius: BorderRadius.circular(12),
-//   //               ),
-//   //             ),
-//   //             onPressed: () {
-//   //               Navigator.of(context).pop();
-//   //               _addItem(_textFieldController.text);
-//   //             },
-//   //             child: const Text('Add'),
-//   //           ),
-//   //         ],
-//   //       );
-//   //     },
-//   //   );
-//   // }
-
-//   // @override
-//   // Widget build(BuildContext context) {
-//   //   return Scaffold(
-//   //     appBar: AppBar(
-//   //       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//   //       title: Text(widget.title),
-//   //     ),
-//   //     // body: const Center(
-//   //     //   child: Column(
-//   //     //     mainAxisAlignment: MainAxisAlignment.center,
-//   //     //     children: <Widget>[],
-//   //     //   ),
-//   //     // ),
-//   //     body: ListView(
-//   //       padding: const EdgeInsets.symmetric(vertical: 8.0),
-//   //       children: _items.map((Item item) {
-//   //         return ListItem(
-//   //           item: item,
-//   //           onItemChanged: _handleItemChange,
-//   //           removeItem: _deleteItem,
-//   //         );
-//   //       }).toList(),
-//   //     ),
-//   //     floatingActionButton: FloatingActionButton(
-//   //       onPressed: _displayDialog,
-//   //       tooltip: 'Add a Grocery Item',
-//   //       child: const Icon(Icons.add),
-//   //     ),
-//   //   );
-//   // }
-// }
 
 class Item {
   Item({required this.name, required this.id});
@@ -326,6 +187,7 @@ class ListItem extends StatelessWidget {
                 ),
               ),
               onPressed: () {
+                print('test edit');
                 Navigator.of(context).pop();
                 onItemChanged(item, _textFieldController.text);
                 _textFieldController.clear();
