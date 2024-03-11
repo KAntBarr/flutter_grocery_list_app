@@ -37,7 +37,10 @@ class _GroceryListState extends State<GroceryList> {
 
   void _addItem(String name) {
     setState(() {
-      _items.add(Item(name: name));
+      _items.add(Item(
+        name: name,
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      ));
       // _items.add(Item(name: name, completed: false));
     });
     _textFieldController.clear();
@@ -46,6 +49,12 @@ class _GroceryListState extends State<GroceryList> {
   void _handleItemChange(Item item, String newName) {
     setState(() {
       item.name = newName;
+    });
+  }
+
+  void _deleteItem(String id) {
+    setState(() {
+      _items.removeWhere((element) => element.id == id);
     });
   }
 
@@ -110,6 +119,7 @@ class _GroceryListState extends State<GroceryList> {
           return ListItem(
             item: item,
             onItemChanged: _handleItemChange,
+            removeItem: _deleteItem,
           );
         }).toList(),
       ),
@@ -123,18 +133,25 @@ class _GroceryListState extends State<GroceryList> {
 }
 
 class Item {
-  Item({required this.name});
+  Item({required this.name, required this.id});
   // Item({required this.name, required this.completed});
   String name;
   // bool completed;
+  String id;
 }
 
 class ListItem extends StatelessWidget {
-  ListItem({required this.item, required this.onItemChanged}) : super(key: ObjectKey(item));
+  ListItem({
+    required this.item,
+    required this.onItemChanged,
+    required this.removeItem,
+  }) : super(key: ObjectKey(item));
 
   final Item item;
 
   final void Function(Item item, String newName) onItemChanged;
+
+  final void Function(String id) removeItem;
 
   final TextEditingController _textFieldController = TextEditingController();
 
@@ -154,10 +171,10 @@ class ListItem extends StatelessWidget {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Edit item'),
+          title: Text('Edit Item : ${item.name}'),
           content: TextField(
             controller: _textFieldController,
-            decoration: const InputDecoration(hintText: 'new item name'),
+            decoration: const InputDecoration(hintText: 'New Name'),
             autofocus: true,
           ),
           actions: <Widget>[
@@ -222,7 +239,9 @@ class ListItem extends StatelessWidget {
             color: Colors.red,
           ),
           alignment: Alignment.centerRight,
-          onPressed: () {},
+          onPressed: () {
+            removeItem(item.id);
+          },
         ),
       ]),
     );
