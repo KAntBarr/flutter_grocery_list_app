@@ -187,9 +187,10 @@ class ListItem extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                print('test edit');
                 Navigator.of(context).pop();
-                onItemChanged(item, _textFieldController.text);
+                if (_textFieldController.text != '') {
+                  onItemChanged(item, _textFieldController.text);
+                }
                 _textFieldController.clear();
               },
               child: const Text('Edit'),
@@ -274,20 +275,25 @@ class ListBloc extends Bloc<ItemEvent, List<Item>> {
     });
 
     on<EditEvent>((event, emit) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(event.item.id, event.newName);
-      event.item.name = event.newName;
-      emit(state.toList());
+      if (event.newName != '') {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(event.item.id, event.newName);
+        event.item.name = event.newName;
+        emit(state.toList());
+      }
     });
 
     on<RemoveEvent>((event, emit) async {
       final prefs = await SharedPreferences.getInstance();
-      List<String> itemIds = state.map((Item item) {
+      List<Item> items =
+          state.where((element) => element.id != event.id).toList();
+      items.removeWhere((element) => element.id == event.id);
+      List<String> itemIds = items.map((Item item) {
         return item.id;
       }).toList();
       await prefs.setStringList('itemIds', itemIds);
       await prefs.remove(event.id);
-      emit(state.where((element) => element.id != event.id).toList());
+      emit(items);
     });
   }
 
