@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const GroceryApp());
@@ -32,30 +33,66 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  final List<Item> _items = <Item>[];
+  List<Item> _items = <Item>[];
   final TextEditingController _textFieldController = TextEditingController();
 
-  void _addItem(String name) {
+  @override
+  void initState() {
+    super.initState();
+    _loadList();
+  }
+
+  Future<void> _loadList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? itemIds = prefs.getStringList('itemIds');
+    final List<Item> completeItems = itemIds?.map((String id) {
+          return Item(
+            name: prefs.getString(id) ?? 'error',
+            id: id,
+          );
+        }).toList() ??
+        [];
+    setState(() {
+      _items = completeItems;
+    });
+  }
+
+  Future<void> _addItem(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    String time = DateTime.now().millisecondsSinceEpoch.toString();
     setState(() {
       _items.add(Item(
         name: name,
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: time,
       ));
       // _items.add(Item(name: name, completed: false));
     });
     _textFieldController.clear();
+    List<String> itemIds = _items.map((Item item) {
+      return item.id;
+    }).toList();
+    await prefs.setStringList('itemIds', itemIds);
+    await prefs.setString(time, name);
   }
 
-  void _handleItemChange(Item item, String newName) {
+  Future<void> _handleItemChange(Item item, String newName) async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       item.name = newName;
     });
+    await prefs.setString(item.id, newName);
   }
 
-  void _deleteItem(String id) {
+  Future<void> _deleteItem(String id) async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _items.removeWhere((element) => element.id == id);
     });
+    List<String> itemIds = _items.map((Item item) {
+      return item.id;
+    }).toList();
+    await prefs.setStringList('itemIds', itemIds);
+    await prefs.remove(id);
   }
 
   Future<void> _displayDialog() async {
@@ -220,7 +257,7 @@ class ListItem extends StatelessWidget {
       title: Row(children: <Widget>[
         Expanded(
           child: Padding(
-            padding: EdgeInsets.only(left: 30.0),
+            padding: const EdgeInsets.only(left: 30.0),
             // child: Text(item.name, style: _getTextStyle(),),
             child: GestureDetector(
                 // onTap: () => _displayDialog(context),
